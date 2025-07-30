@@ -322,3 +322,32 @@ func GetCommitRange(revRange string, reverse bool) ([]string, error) {
 	}
 	return commits, nil
 }
+
+// isBranch checks if a reference is a local branch
+func IsBranch(ref string) bool {
+	cmd := exec.Command("git", "show-ref", "--verify", "--quiet", "refs/heads/"+ref)
+	return cmd.Run() == nil
+}
+
+// writeRefFile writes a commit hash directly to a git ref file
+func WriteRefFile(refName, commitHash string) error {
+	gitDir, err := GetGitDirectory()
+	if err != nil {
+		return err
+	}
+	
+	refPath := filepath.Join(gitDir, "refs", "heads", refName)
+	
+	// Create the refs/heads directory if it doesn't exist
+	refsHeadsDir := filepath.Dir(refPath)
+	if err := os.MkdirAll(refsHeadsDir, 0755); err != nil {
+		return fmt.Errorf("failed to create refs directory: %v", err)
+	}
+	
+	// Write the commit hash to the ref file
+	if err := os.WriteFile(refPath, []byte(commitHash+"\n"), 0644); err != nil {
+		return fmt.Errorf("failed to write ref file: %v", err)
+	}
+	
+	return nil
+}

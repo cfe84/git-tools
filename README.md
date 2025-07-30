@@ -14,6 +14,8 @@ This repo contains the following commands:
 
 `git split`, which allows you to selectively delete stuff from the last commit, and apply it to a new commit. This is useful when you want to split commits in a finer grain than what `git revise --cut` would allow you. You start deleting the code that you want in the new commit, stage that, then call `git split`, and that will amend the current commit, then re-apply the change and stage them (optionally committing them directly.)
 
+`git bookmark`, which allows you to create relative bookmarks to git references. Unlike branches, bookmarks store relative references (like `HEAD~2`) and resolve them dynamically when used. This is useful for temporarily marking specific commits relative to your current position. You can create, list, show, checkout bookmarks, and sync branches to bookmark positions.
+
 All these commands contain a `--help` subcommand that displays their usage.
 
 # Install

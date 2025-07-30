@@ -46,6 +46,9 @@ $(BIN_DIR)/git-reparent$(EXT): git-reparent.go common/*.go go.mod | $(BIN_DIR)
 $(BIN_DIR)/git-split$(EXT): git-split.go common/*.go go.mod | $(BIN_DIR)
 	go build -o $(BIN_DIR)/git-split$(EXT) git-split.go
 
+$(BIN_DIR)/git-bookmark$(EXT): git-bookmark.go common/*.go go.mod | $(BIN_DIR)
+	go build -o $(BIN_DIR)/git-bookmark$(EXT) git-bookmark.go
+
 # Clean target to remove all executables
 clean:
 	if exist $(BIN_DIR) rmdir /S /Q $(BIN_DIR)
@@ -80,5 +83,6 @@ help:
 	@echo "  $(BIN_DIR)/git-move-branch$(EXT)"
 	@echo "  $(BIN_DIR)/git-reparent$(EXT)"
 	@echo "  $(BIN_DIR)/git-split$(EXT)"
+	@echo "  $(BIN_DIR)/git-bookmark$(EXT)"
 
 .PHONY: all clean test install help
