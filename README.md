@@ -16,6 +16,8 @@ This repo contains the following commands:
 
 `git bookmark`, which allows you to create relative bookmarks to git references. Unlike branches, bookmarks store relative references (like `HEAD~2`) and resolve them dynamically when used. This is useful for temporarily marking specific commits relative to your current position. You can create, list, show, checkout bookmarks, and sync branches to bookmark positions.
 
+`git newbranch`, performs a shallow fetch on the main branch on origin and creates a new branch from it.
+
 `git get`, which returns properties of the git repo. At the moment the only subcommand is `main-branch` and returns the main branch on the tracking remote.
 
 All these commands contain a `--help` subcommand that displays their usage.

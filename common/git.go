@@ -252,6 +252,15 @@ func StageAllChanges() error {
 	return cmd.Run()
 }
 
+// Fetch remote branch
+func FetchBranch(remote string, branch string, shallow bool) error {
+	cmd := exec.Command("git", "fetch", remote, branch)
+	if shallow {
+		cmd.Args = append(cmd.Args, "--depth=1")
+	}
+	return cmd.Run()
+}
+
 // createCommit creates a new commit with an optional message
 func CreateCommit(message string) error {
 	if message != "" {
