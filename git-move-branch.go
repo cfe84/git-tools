@@ -108,7 +108,7 @@ func main() {
 	// If moving the current branch, checkout the target commit first
 	if isCurrentBranch {
 		fmt.Printf("%s▶️ Branch '%s' is currently checked out, switching to target commit first...%s\n", common.ColorYellow, branchToMove, common.ColorReset)
-		if err := common.CheckoutCommit(newCommit); err != nil {
+		if err := common.Checkout(newCommit); err != nil {
 			fmt.Fprintf(os.Stderr, "%s❌ Failed to checkout target commit: %s%s\n", common.ColorRed, err, common.ColorReset)
 			os.Exit(1)
 		}
@@ -124,7 +124,7 @@ func main() {
 	// Check out the branch if requested or if it was the current branch
 	if shouldCheckout || isCurrentBranch {
 		fmt.Printf("%s▶️ Checking out branch '%s'...%s\n", common.ColorYellow, branchToMove, common.ColorReset)
-		if err := common.CheckoutBranch(branchToMove); err != nil {
+		if err := common.Checkout(branchToMove); err != nil {
 			fmt.Fprintf(os.Stderr, "%s❌ Failed to checkout branch after move: %s%s\n", common.ColorRed, err, common.ColorReset)
 			fmt.Fprintf(os.Stderr, "%sWarning: Branch was moved successfully, but you may need to manually checkout '%s'%s\n", common.ColorYellow, branchToMove, common.ColorReset)
 		}

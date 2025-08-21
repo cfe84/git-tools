@@ -2,21 +2,21 @@ package main
 
 import (
 	"fmt"
+	"git-tools/common"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"git-tools/common"
 )
 
 type reparentOptions struct {
-	parentRef     string
+	parentRef       string
 	numberOfCommits int
-	fromRef       string
-	shouldBackup  bool
-	shouldConfirm bool
-	noBranch      bool
-	continueRebase bool
+	fromRef         string
+	shouldBackup    bool
+	shouldConfirm   bool
+	noBranch        bool
+	continueRebase  bool
 }
 
 func main() {
@@ -166,7 +166,7 @@ func runReparent(opts *reparentOptions) error {
 	}
 
 	fmt.Printf("%s▶️ Checking out new parent as detached HEAD...%s\n", common.ColorYellow, common.ColorReset)
-	if err := common.CheckoutCommit(parentCommit); err != nil {
+	if err := common.Checkout(parentCommit); err != nil {
 		return fmt.Errorf("failed to checkout parent commit: %v", err)
 	}
 
@@ -240,7 +240,7 @@ func handleAbort() {
 	}
 
 	fmt.Printf("%s▶️ Checking out original branch '%s'...%s\n", common.ColorYellow, state.originalBranch, common.ColorReset)
-	if err := common.CheckoutBranch(state.originalBranch); err != nil {
+	if err := common.Checkout(state.originalBranch); err != nil {
 		fmt.Fprintf(os.Stderr, "%sError: Failed to checkout original branch: %v%s\n", common.ColorRed, err, common.ColorReset)
 		os.Exit(1)
 	}
@@ -255,7 +255,7 @@ func handleAbort() {
 func applyCherryPicks(commits []string) error {
 	for i, commit := range commits {
 		fmt.Printf("%s▶️ Cherry-picking commit %d/%d: %s%s\n", common.ColorYellow, i+1, len(commits), commit[:8], common.ColorReset)
-		
+
 		if err := common.CherryPickCommit(commit); err != nil {
 			if common.HasConflicts() {
 				fmt.Printf("%s⚠️ Cherry-pick resulted in conflicts%s\n", common.ColorYellow, common.ColorReset)
@@ -263,7 +263,7 @@ func applyCherryPicks(commits []string) error {
 				fmt.Printf("%s  git add <resolved-files>%s\n", common.ColorWhite, common.ColorReset)
 				fmt.Printf("%s  git cherry-pick --continue%s\n", common.ColorWhite, common.ColorReset)
 				fmt.Printf("%s  git reparent --continue%s\n", common.ColorWhite, common.ColorReset)
-				
+
 				remainingCommits := commits[i+1:]
 				if err := updateReparentState(remainingCommits); err != nil {
 					return fmt.Errorf("failed to update reparent state: %v", err)
@@ -295,7 +295,7 @@ func finishReparent(originalBranch string, noBranch bool) error {
 		}
 
 		fmt.Printf("%s▶️ Checking out branch '%s'...%s\n", common.ColorYellow, originalBranch, common.ColorReset)
-		if err := common.CheckoutBranch(originalBranch); err != nil {
+		if err := common.Checkout(originalBranch); err != nil {
 			return fmt.Errorf("failed to checkout branch: %v", err)
 		}
 	}
@@ -306,7 +306,7 @@ func finishReparent(originalBranch string, noBranch bool) error {
 
 func getCommitsToReparent(opts *reparentOptions) ([]string, error) {
 	var revRange string
-	
+
 	if opts.fromRef != "" {
 		// Get commits from fromRef to HEAD
 		if !common.GitRefExists(opts.fromRef) {
@@ -317,7 +317,7 @@ func getCommitsToReparent(opts *reparentOptions) ([]string, error) {
 		// Get last N commits
 		revRange = fmt.Sprintf("HEAD~%d..HEAD", opts.numberOfCommits)
 	}
-	
+
 	return common.GetCommitRange(revRange, true)
 }
 
@@ -340,18 +340,18 @@ func saveReparentState(commits []string, originalBranch string, noBranch bool) e
 	if err != nil {
 		return err
 	}
-	
+
 	content := fmt.Sprintf("ORIGINAL_BRANCH=%s\n", originalBranch)
 	content += fmt.Sprintf("NO_BRANCH=%t\n", noBranch)
 	content += "COMMITS=\n"
 	for _, commit := range commits {
 		content += fmt.Sprintf("%s\n", commit)
 	}
-	
+
 	if err := os.WriteFile(stateFile, []byte(content), 0644); err != nil {
 		return err
 	}
-	
+
 	return createReparentHead()
 }
 
@@ -360,19 +360,19 @@ func loadReparentState() (*reparentState, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if _, err := os.Stat(stateFile); os.IsNotExist(err) {
 		return nil, fmt.Errorf("no reparent in progress")
 	}
-	
+
 	content, err := os.ReadFile(stateFile)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	lines := strings.Split(string(content), "\n")
 	state := &reparentState{}
-	
+
 	inCommits := false
 	for _, line := range lines {
 		if strings.HasPrefix(line, "ORIGINAL_BRANCH=") {
@@ -385,7 +385,7 @@ func loadReparentState() (*reparentState, error) {
 			state.remainingCommits = append(state.remainingCommits, line)
 		}
 	}
-	
+
 	return state, nil
 }
 
@@ -394,7 +394,7 @@ func updateReparentState(remainingCommits []string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	state.remainingCommits = remainingCommits
 	return saveReparentState(state.remainingCommits, state.originalBranch, state.noBranch)
 }
@@ -404,13 +404,13 @@ func cleanupReparentState() error {
 	if err != nil {
 		return err
 	}
-	
+
 	if _, err := os.Stat(stateFile); err == nil {
 		if err := os.Remove(stateFile); err != nil {
 			return err
 		}
 	}
-	
+
 	return removeReparentHead()
 }
 
@@ -419,12 +419,12 @@ func createReparentHead() error {
 	if err != nil {
 		return err
 	}
-	
+
 	headCommit, err := common.GetCommitHash("HEAD")
 	if err != nil {
 		return err
 	}
-	
+
 	reparentHeadFile := filepath.Join(gitDir, "REPARENT_HEAD")
 	return os.WriteFile(reparentHeadFile, []byte(headCommit+"\n"), 0644)
 }
@@ -434,12 +434,12 @@ func removeReparentHead() error {
 	if err != nil {
 		return err
 	}
-	
+
 	reparentHeadFile := filepath.Join(gitDir, "REPARENT_HEAD")
 	if _, err := os.Stat(reparentHeadFile); os.IsNotExist(err) {
 		return nil // Already removed
 	}
-	
+
 	return os.Remove(reparentHeadFile)
 }
 
@@ -448,12 +448,12 @@ func isReparentInProgress() bool {
 	if err != nil {
 		return false
 	}
-	
+
 	reparentHeadFile := filepath.Join(gitDir, "REPARENT_HEAD")
 	if _, err := os.Stat(reparentHeadFile); err == nil {
 		return true
 	}
-	
+
 	return false
 }
 

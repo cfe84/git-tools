@@ -13,7 +13,7 @@ func IsGitRepository() bool {
 	if _, err := os.Stat(".git"); err == nil {
 		return true
 	}
-	
+
 	cmd := exec.Command("git", "rev-parse", "--git-dir")
 	cmd.Stderr = nil
 	return cmd.Run() == nil
@@ -93,15 +93,8 @@ func GetCommitHash(ref string) (string, error) {
 	return strings.TrimSpace(string(output)), nil
 }
 
-// checkoutCommit checks out a specific commit (detached HEAD)
-func CheckoutCommit(commit string) error {
+func Checkout(commit string) error {
 	cmd := exec.Command("git", "checkout", commit)
-	return cmd.Run()
-}
-
-// checkoutBranch checks out a specific branch
-func CheckoutBranch(branch string) error {
-	cmd := exec.Command("git", "checkout", branch)
 	return cmd.Run()
 }
 
@@ -117,13 +110,13 @@ func IsCherryPickInProgress() bool {
 	if err != nil {
 		return false
 	}
-	
+
 	// Check if CHERRY_PICK_HEAD exists
 	cherryPickHead := filepath.Join(gitDir, "CHERRY_PICK_HEAD")
 	if _, err := os.Stat(cherryPickHead); err == nil {
 		return true
 	}
-	
+
 	return false
 }
 
@@ -141,7 +134,7 @@ func HasUnstagedChanges() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	
+
 	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
 	for _, line := range lines {
 		if len(line) >= 2 {
@@ -166,14 +159,14 @@ func HasStagedChanges() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	
+
 	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
 	for _, line := range lines {
 		if len(line) >= 2 {
 			// Check if the index status (first character) indicates staged changes
 			indexStatus := line[0]
-			if indexStatus == 'M' || indexStatus == 'A' || indexStatus == 'D' || 
-			   indexStatus == 'R' || indexStatus == 'C' || indexStatus == 'T' {
+			if indexStatus == 'M' || indexStatus == 'A' || indexStatus == 'D' ||
+				indexStatus == 'R' || indexStatus == 'C' || indexStatus == 'T' {
 				return true, nil
 			}
 		}
@@ -188,13 +181,13 @@ func HasConflicts() bool {
 	if err != nil {
 		return false
 	}
-	
+
 	lines := strings.Split(string(output), "\n")
 	for _, line := range lines {
-		if strings.HasPrefix(line, "UU ") || strings.HasPrefix(line, "AA ") || 
-		   strings.HasPrefix(line, "DD ") || strings.HasPrefix(line, "AU ") ||
-		   strings.HasPrefix(line, "UD ") || strings.HasPrefix(line, "UA ") ||
-		   strings.HasPrefix(line, "DU ") || strings.HasPrefix(line, "AD ") {
+		if strings.HasPrefix(line, "UU ") || strings.HasPrefix(line, "AA ") ||
+			strings.HasPrefix(line, "DD ") || strings.HasPrefix(line, "AU ") ||
+			strings.HasPrefix(line, "UD ") || strings.HasPrefix(line, "UA ") ||
+			strings.HasPrefix(line, "DU ") || strings.HasPrefix(line, "AD ") {
 			return true
 		}
 	}
@@ -236,7 +229,7 @@ func CreateStagedDiff(filename string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	return os.WriteFile(filename, output, 0644)
 }
 
@@ -288,12 +281,12 @@ func GetAllBranches() ([]string, error) {
 
 	lines := strings.Split(string(output), "\n")
 	var branches []string
-	
+
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		// Remove the current branch marker (*) and any leading spaces
 		line = strings.TrimLeft(line, "* ")
-		
+
 		if line != "" {
 			branches = append(branches, line)
 		}
@@ -309,13 +302,13 @@ func GetCommitRange(revRange string, reverse bool) ([]string, error) {
 		args = append(args, "--reverse")
 	}
 	args = append(args, revRange)
-	
+
 	cmd := exec.Command("git", args...)
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
 	}
-	
+
 	commits := strings.Split(strings.TrimSpace(string(output)), "\n")
 	if len(commits) == 1 && commits[0] == "" {
 		return []string{}, nil
@@ -335,19 +328,19 @@ func WriteRefFile(refName, commitHash string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	refPath := filepath.Join(gitDir, "refs", "heads", refName)
-	
+
 	// Create the refs/heads directory if it doesn't exist
 	refsHeadsDir := filepath.Dir(refPath)
 	if err := os.MkdirAll(refsHeadsDir, 0755); err != nil {
 		return fmt.Errorf("failed to create refs directory: %v", err)
 	}
-	
+
 	// Write the commit hash to the ref file
 	if err := os.WriteFile(refPath, []byte(commitHash+"\n"), 0644); err != nil {
 		return fmt.Errorf("failed to write ref file: %v", err)
 	}
-	
+
 	return nil
 }
