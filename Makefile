@@ -4,15 +4,18 @@
 # Platform detection
 ifeq ($(OS),Windows_NT)
     PLATFORM := WINDOWS
+	INSTALL_DIR := $(LOCALAPPDATA)\Microsoft\WindowsApps
     EXT := .exe
 else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Linux)
         PLATFORM := LINUX
+		INSTALL_DIR := $(HOME)/bin
         EXT :=
     endif
     ifeq ($(UNAME_S),Darwin)
         PLATFORM := MACOS
+		INSTALL_DIR := $(HOME)/bin
         EXT :=
     endif
 endif
@@ -21,13 +24,16 @@ endif
 GO_FILES := $(wildcard git-*.go)
 BIN_DIR := bin
 EXECUTABLES := $(addprefix $(BIN_DIR)/, $(addsuffix $(EXT), $(basename $(GO_FILES))))
+INSTALLED_EXECUTABLES := $(addprefix $(INSTALL_DIR)/, $(notdir $(EXECUTABLES)))
 
 # Default target
 all: $(BIN_DIR) $(EXECUTABLES)
 
-# Create bin directory
 $(BIN_DIR):
 	mkdir $(BIN_DIR)
+
+$(INSTALL_DIR):
+	mkdir $(INSTALL_DIR)
 
 # Pattern rule to build executables from Go files
 $(BIN_DIR)/%$(EXT): %.go common/*.go go.mod | $(BIN_DIR)
@@ -49,22 +55,23 @@ $(BIN_DIR)/git-split$(EXT): git-split.go common/*.go go.mod | $(BIN_DIR)
 $(BIN_DIR)/git-bookmark$(EXT): git-bookmark.go common/*.go go.mod | $(BIN_DIR)
 	go build -o $(BIN_DIR)/git-bookmark$(EXT) git-bookmark.go
 
+$(INSTALL_DIR)/%: $(BIN_DIR)/%
+	cp $< $@
+
 # Clean target to remove all executables
 clean:
+ifeq ($(PLATFORM),WINDOWS)
 	if exist $(BIN_DIR) rmdir /S /Q $(BIN_DIR)
+else
+	rm -rf $(BIN_DIR)
+endif
 
 # Test target to verify all programs compile
 test: all
 	@echo "All executables built successfully in $(BIN_DIR)!"
 
-# Install target (optional) - copies executables to a directory in PATH
-install: all
-	@echo "To install, copy the executable files to a directory in your PATH"
-ifeq ($(PLATFORM),WINDOWS)
-	@echo "Example: copy $(BIN_DIR)\*$(EXT) C:\Users\%USERNAME%\bin\"
-else
-	@echo "Example: sudo cp $(BIN_DIR)/* /usr/local/bin/"
-endif
+install: $(INSTALL_DIR) $(INSTALLED_EXECUTABLES)
+	@echo "Installing to $(INSTALL_DIR)"
 
 # Help target
 help:
@@ -72,7 +79,7 @@ help:
 	@echo "  all       - Build all executables (default) into bin/"
 	@echo "  clean     - Remove bin directory and all executables"
 	@echo "  test      - Build and verify all programs compile"
-	@echo "  install   - Show instructions for installing executables"
+	@echo "  install   - Install binaries"
 	@echo "  help      - Show this help message"
 	@echo ""
 	@echo "Platform: $(PLATFORM)"
