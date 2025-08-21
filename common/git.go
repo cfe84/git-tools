@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -293,6 +294,25 @@ func GetAllBranches() ([]string, error) {
 	}
 
 	return branches, nil
+}
+
+// Get the main branch on a remote
+func GetRemoteMainBranch(remote string) (string, error) {
+	ref := remote + "/HEAD"
+	cmd := exec.Command("git", "rev-parse", "--abbrev-ref", ref)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &out
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("git command failed: %s", strings.TrimSpace(out.String()))
+	}
+
+	result := strings.TrimSpace(out.String())
+	parts := strings.Split(result, "/")
+	if len(parts) == 0 {
+		return "", fmt.Errorf("unexpected git output: %q", result)
+	}
+	return strings.Join(parts[1:], "/"), nil
 }
 
 // getCommitRange gets a range of commits using git rev-list

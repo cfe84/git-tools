@@ -10,11 +10,13 @@ This repo contains the following commands:
 
 `git move-branch`, which changes the commit to where a branch is pointing. This is very useful if you work on cumulative changes (e.g. branch 2 is created on top of branch 1) and use something like [`git revise`](https://git-revise.readthedocs.io/en/latest/index.html) to alter the content of branch 1's commit.
 
-`git reparent`, which re-applies commits on top of a new parent. This is very useful when you work on a repository when the main branch keeps diverging, and `git rebase` gives you tons of garbage conflicts.
+`git reparent`, which re-applies commits on top of a new parent. It's quite similar to `git rebase --onto` but with a simpler interface and the default merge strategies of a cherry-pick. This is useful when you work on a repository when the main branch keeps diverging, and `git rebase` gives you tons of garbage conflicts.
 
 `git split`, which allows you to selectively delete stuff from the last commit, and apply it to a new commit. This is useful when you want to split commits in a finer grain than what `git revise --cut` would allow you. You start deleting the code that you want in the new commit, stage that, then call `git split`, and that will amend the current commit, then re-apply the change and stage them (optionally committing them directly.)
 
 `git bookmark`, which allows you to create relative bookmarks to git references. Unlike branches, bookmarks store relative references (like `HEAD~2`) and resolve them dynamically when used. This is useful for temporarily marking specific commits relative to your current position. You can create, list, show, checkout bookmarks, and sync branches to bookmark positions.
+
+`git get`, which returns properties of the git repo. At the moment the only subcommand is `main-branch` and returns the main branch on the tracking remote.
 
 All these commands contain a `--help` subcommand that displays their usage.
 
